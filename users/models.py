@@ -1,87 +1,104 @@
+# This is an auto-generated Django model module.
+# You'll have to do the following manually to clean this up:
+#   * Rearrange models' order
+#   * Make sure each model has one field with primary_key=True
+#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
+#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
+# Feel free to rename the models, but don't rename db_table values or field names.
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.db import models
-from django.contrib.auth.models import AbstractUser, Group, Permission
 
-class CustomUser(AbstractUser):
-  id_user = models.AutoField(primary_key=True)
-  username = models.CharField(max_length=45, blank=True, null=True, unique=True)
-  description = models.CharField(max_length=45, blank=True, null=True)
-  email = models.CharField(max_length=45, blank=True, null=True)
-  password = models.CharField(max_length=45, blank=True, null=True)
-  image = models.CharField(max_length=45, blank=True, null=True)
-  type_mbti = models.CharField(max_length=4, blank=True, null=True)
-  id_role = models.ForeignKey('Role', models.DO_NOTHING, db_column='id_role')
-  id_mbti_type = models.ForeignKey('MbtiType', models.DO_NOTHING, db_column='id_mbti_type')
+from users.main import CustomUserManager
 
-  class Meta:
-    db_table = 'customuser'
-
-  groups = models.ManyToManyField(
-    Group, # Импорт модели Group
-    verbose_name='groups',
-    blank=True,
-    related_name='custom_user_set',
-  )
-  user_permissions = models.ManyToManyField(
-    Permission, # Импорт модели Permission
-    verbose_name='user permissions',
-    blank=True,
-    related_name='custom_user_set',
-  )
-
-  def __str__(self):
-    return self.username
 
 class Article(models.Model):
-    id_article = models.AutoField(primary_key=True)  # The composite primary key (id_article, id_user) found, that is not supported. The first column is selected.
+    id_article = models.AutoField(primary_key=True)
     article_name = models.CharField(max_length=128, blank=True, null=True)
     article_body = models.CharField(max_length=1024, blank=True, null=True)
-    id_user = models.ForeignKey('CustomUser', models.DO_NOTHING, db_column='id_user')
+    id_user = models.ForeignKey('Customuser', models.DO_NOTHING, db_column='id_user')
 
     class Meta:
+        managed = False
         db_table = 'article'
-        unique_together = (('id_article', 'id_user'),)
 
 
-class Articleimages(models.Model):
-    article = models.ForeignKey('Articles', models.DO_NOTHING)
+class ArticleImages(models.Model):
+    article = models.ForeignKey(Article, models.DO_NOTHING)
     image_url = models.CharField(max_length=255)
 
     class Meta:
-        db_table = 'articleimages'
-
-
-class Articles(models.Model):
-    title = models.CharField(max_length=255)
-    content = models.TextField()
-
-    class Meta:
-        db_table = 'articles'
+        managed = False
+        db_table = 'article_images'
 
 
 class Avatars(models.Model):
-    user = models.ForeignKey('CustomUser', models.DO_NOTHING)
+    user = models.ForeignKey('Customuser', models.DO_NOTHING)
     avatar_url = models.CharField(max_length=255)
     date_added = models.DateTimeField(blank=True, null=True)
     is_active = models.BooleanField(blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'avatars'
 
 
 class Chats(models.Model):
-    user = models.ForeignKey('CustomUser', models.DO_NOTHING)
+    user = models.ForeignKey('Customuser', models.DO_NOTHING)
 
     class Meta:
+        managed = False
         db_table = 'chats'
 
 
+class Customuser(AbstractBaseUser):
+    id_user = models.AutoField(primary_key=True)
+    name = models.CharField(unique=True, max_length=45, blank=True, null=True)
+    description = models.CharField(max_length=45, blank=True, null=True)
+    email = models.CharField(max_length=45, blank=True, null=True)
+    password = models.CharField(max_length=45, blank=True, null=True)
+    image = models.CharField(max_length=45, blank=True, null=True)
+    type_mbti = models.CharField(max_length=4, blank=True, null=True)
+    id_role = models.ForeignKey('Role', models.DO_NOTHING, db_column='id_role')
+    id_mbti_type = models.ForeignKey('MbtiType', models.DO_NOTHING, db_column='id_mbti_type')
+    last_login = models.DateTimeField(blank=True, null=True)
+
+    objects = CustomUserManager()
+
+    class Meta:
+        managed = False
+        db_table = 'customuser'
+
+    USERNAME_FIELD = 'name'
+
+class DjangoMigrations(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    app = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    applied = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'django_migrations'
+
+
 class Friends(models.Model):
-    user = models.ForeignKey('CustomUser', models.DO_NOTHING)
-    friend = models.ForeignKey('CustomUser', models.DO_NOTHING, related_name='friends_friend_set')
+    user = models.ForeignKey(Customuser, models.DO_NOTHING)
+    friend = models.ForeignKey(Customuser, models.DO_NOTHING, related_name='friends_friend_set')
     date_added = models.DateTimeField(blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'friends'
+
+
+class Likes(models.Model):
+    user = models.ForeignKey(Customuser, models.DO_NOTHING, blank=True, null=True)
+    post = models.ForeignKey('Post', models.DO_NOTHING, blank=True, null=True)
+    liked_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'likes'
 
 
 class MbtiQuestion(models.Model):
@@ -89,6 +106,7 @@ class MbtiQuestion(models.Model):
     question = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'mbti_question'
 
 
@@ -97,6 +115,7 @@ class MbtiType(models.Model):
     name_of_type = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'mbti_type'
 
 
@@ -107,7 +126,27 @@ class Messages(models.Model):
     attachment_url = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'messages'
+
+
+class Post(models.Model):
+    id_post = models.AutoField(primary_key=True)
+    post_body = models.CharField(max_length=1024, blank=True, null=True)
+    id_user = models.ForeignKey(Customuser, models.DO_NOTHING, db_column='id_user')
+
+    class Meta:
+        managed = False
+        db_table = 'post'
+
+
+class PostImages(models.Model):
+    post = models.ForeignKey(Post, models.DO_NOTHING)
+    image_url = models.CharField(max_length=255)
+
+    class Meta:
+        managed = False
+        db_table = 'post_images'
 
 
 class Role(models.Model):
@@ -115,6 +154,7 @@ class Role(models.Model):
     name_role = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'role'
 
 
@@ -123,13 +163,15 @@ class Tag(models.Model):
     name_tag = models.CharField(max_length=45, blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'tag'
 
 
 class UserTags(models.Model):
-    id_tag = models.OneToOneField(Tag, models.DO_NOTHING, db_column='id_tag', primary_key=True)  # The composite primary key (id_tag, id_user) found, that is not supported. The first column is selected.
-    id_user = models.ForeignKey('CustomUser', models.DO_NOTHING, db_column='id_user')
+    id_user_tags = models.AutoField(primary_key=True)
+    id_tag = models.ForeignKey(Tag, models.DO_NOTHING, db_column='id_tag')
+    id_user = models.ForeignKey(Customuser, models.DO_NOTHING, db_column='id_user')
 
     class Meta:
+        managed = False
         db_table = 'user_tags'
-        unique_together = (('id_tag', 'id_user'),)

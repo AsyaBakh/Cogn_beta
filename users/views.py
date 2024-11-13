@@ -4,11 +4,11 @@ from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 
 from .serializers import UserSerializer, LoginSerializer, RegistrationStepTwoSerializer
-from .models import CustomUser
+from .models import Customuser
 
 #Регистрация
 class RegistrationStepOne(generics.CreateAPIView):
-    queryset = CustomUser.objects.all()
+    queryset = Customuser.objects.all()
     serializer_class = UserSerializer
     permission_classes = (permissions.AllowAny,)
 
@@ -44,10 +44,10 @@ class LoginView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        username = serializer.validated_data['username']
+        name = serializer.validated_data['name']
         password = serializer.validated_data['password']
 
-        user = CustomUser.objects.filter(username=username).first()
+        user = Customuser.objects.filter(name=name).first()
         if user is None:
             return Response({'error': 'Пользователь не найден'}, status=status.HTTP_404_NOT_FOUND)
 
