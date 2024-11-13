@@ -5,11 +5,9 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
-from django.contrib.auth.base_user import AbstractBaseUser
+from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import PermissionsMixin
 from django.db import models
-
-from users.main import CustomUserManager
-
 
 class Article(models.Model):
     id_article = models.AutoField(primary_key=True)
@@ -50,7 +48,23 @@ class Chats(models.Model):
         db_table = 'chats'
 
 
-class Customuser(AbstractBaseUser):
+class CustomUserManager(BaseUserManager):
+  use_in_migrations = True
+
+  def _create_user(self, name, email, password):
+    if not email:
+      raise ValueError('The Email must be set')
+    email = self.normalize_email(email)
+    user = self.model(name=name, email=email)
+    user.set_password(password)
+    user.save(using=self._db)
+    return user
+
+  def create_user(self, name, email, password):
+    return self._create_user(name, email, password)
+
+
+class Customuser(AbstractBaseUser, PermissionsMixin):
     id_user = models.AutoField(primary_key=True)
     name = models.CharField(unique=True, max_length=45, blank=True, null=True)
     description = models.CharField(max_length=45, blank=True, null=True)
@@ -63,12 +77,26 @@ class Customuser(AbstractBaseUser):
     last_login = models.DateTimeField(blank=True, null=True)
 
     objects = CustomUserManager()
+    USERNAME_FIELD = 'name'
+    REQUIRED_FIELDS = []
 
     class Meta:
         managed = False
         db_table = 'customuser'
 
-    USERNAME_FIELD = 'name'
+    groups = models.ManyToManyField(
+        'auth.Group',
+        verbose_name='groups',
+        blank=True,
+        related_name='customuser_set',
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        verbose_name='user permissions',
+        blank=True,
+        related_name='customuser_set',
+    )
+
 
 class DjangoMigrations(models.Model):
     id = models.BigAutoField(primary_key=True)
@@ -89,7 +117,6 @@ class Friends(models.Model):
     class Meta:
         managed = False
         db_table = 'friends'
-
 
 class Likes(models.Model):
     user = models.ForeignKey(Customuser, models.DO_NOTHING, blank=True, null=True)
